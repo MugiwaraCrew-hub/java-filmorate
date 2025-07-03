@@ -9,21 +9,20 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
 
-    public HashMap<Integer, Film> filmsMap = new HashMap<>();
+    private static final LocalDate CINEMA_BIRTH_DATE = LocalDate.of(1895, 12, 28);
+    private final Map<Integer, Film> filmsMap = new HashMap<>();
     private int idCounter = 1;
 
     @PostMapping
     public Film createFilm(@Valid @RequestBody Film film) {
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            log.warn("Попытка добавить фильм с недопустимой датой релиза: {}", film.getReleaseDate());
-            throw new ValidationException("Фильм не добавлен: дата релиза раньше 28.12.1895");
-        }
+        validateFilm(film);
         film.setId(idCounter++);
         filmsMap.put(film.getId(), film);
         log.info("Фильм добавлен: {}", film);
@@ -42,8 +41,16 @@ public class FilmController {
             log.warn("Попытка обновить несуществующий фильм с id: {}", film.getId());
             throw new ValidationException("Фильм с таким ID не найден");
         }
+        validateFilm(film);
         filmsMap.put(film.getId(), film);
         log.info("Фильм обновлён: {}", film);
         return film;
+    }
+
+    private void validateFilm(Film film) {
+        if (film.getReleaseDate().isBefore(CINEMA_BIRTH_DATE)) {
+            log.warn("Попытка добавить/обновить фильм с недопустимой датой релиза: {}", film.getReleaseDate());
+            throw new ValidationException("Дата релиза не может быть раньше 28.12.1895");
+        }
     }
 }

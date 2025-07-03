@@ -20,11 +20,7 @@ public class UserController {
 
     @PostMapping
     public User createUser(@Valid @RequestBody User user) {
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-            log.info("Имя пользователя не указано. Используем логин как имя: {}", user.getLogin());
-        }
-
+        fillNameIfBlank(user);
         user.setId(idController++);
         usersMap.put(user.getId(), user);
         log.info("Пользователь создан: {}", user);
@@ -43,8 +39,16 @@ public class UserController {
             log.warn("Попытка обновить несуществующего пользователя с id: {}", user.getId());
             throw new ValidationException("Такого пользователя не существует");
         }
+        fillNameIfBlank(user);
         usersMap.put(user.getId(), user);
         log.info("Пользователь обновлён: {}", user);
         return user;
+    }
+
+    private void fillNameIfBlank(User user) {
+        if (user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+            log.info("Имя пользователя не указано. Используем логин как имя: {}", user.getLogin());
+        }
     }
 }
